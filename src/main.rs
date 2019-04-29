@@ -17,7 +17,7 @@ mod address;
 mod args;
 mod utils;
 
-const DEFAULT_PATH: &'static str = "m/44'/242'/0'/0'";
+pub(crate) const DEFAULT_PATH: &'static str = "m/44'/242'/0'/0'";
 
 fn main() {
     let mut args = match Options::parse() {
