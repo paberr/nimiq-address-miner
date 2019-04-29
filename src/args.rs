@@ -1,71 +1,84 @@
-use std::env::Args;
 use std::str::FromStr;
+use clap::{Arg, App};
 
-pub(crate) struct Arguments {
+#[derive(Clone)]
+pub(crate) struct Options {
     pub(crate) strict: bool,
     pub(crate) contains: bool,
+    pub(crate) verbose: bool,
     pub(crate) prefix: String,
     pub(crate) max_rounds: Option<usize>,
+    pub(crate) num_threads: Option<usize>,
 }
 
 #[derive(Clone, Debug)]
 pub(crate) enum ArgumentError {
     PrefixMissing,
-    InvalidPrefix,
+    InvalidRounds,
+    InvalidThreads,
 }
 
-impl Arguments {
-    pub(crate) fn from_args(args: Args) -> Result<Arguments, ArgumentError> {
-        let mut args: Vec<String> = args.collect();
+impl Options {
+    pub(crate) fn create_app<'a, 'b>() -> App<'a, 'b> {
+        App::new("vanity_generate")
+            .version("0.1.0")
+            .about("Nimiq Vanity Address Generator")
+            .arg(Arg::with_name("prefix")
+                .value_name("PREFIX")
+                .help("Address prefix to look for.")
+                .takes_value(true)
+                .required(true))
+            .arg(Arg::with_name("max_rounds")
+                .long("rounds")
+                .value_name("MAX_ROUNDS")
+                .help("Maximum number of rounds to run per thread.")
+                .takes_value(true))
+            .arg(Arg::with_name("num_threads")
+                .short("t")
+                .long("threads")
+                .value_name("THREADS")
+                .help("Number of threads to use.")
+                .takes_value(true))
+            .arg(Arg::with_name("strict")
+                .long("strict")
+                .help("If enabled, characters will not be mapped to similar looking characters.")
+                .takes_value(false))
+            .arg(Arg::with_name("contains")
+                .long("contains")
+                .help("If enabled, the prefix may also be contained in the middle of the address.")
+                .takes_value(false))
+            .arg(Arg::with_name("verbose")
+                .short("v")
+                .help("Display statistics about speed every 1000 addresses.")
+                .takes_value(false))
+    }
 
-        if args.len() < 2 {
-            return Err(ArgumentError::PrefixMissing);
-        }
-
-        // Remove first argument.
-        args.remove(0);
-
-        let mut prefix: Option<String> = None;
-        let mut max_rounds: Option<usize> = None;
-        let mut strict = false;
-        let mut contains = false;
-
-        for arg in args {
-            if arg == "--strict" {
-                strict = true;
-            } else if arg == "--contains" {
-                contains = true;
-            } else if prefix.is_none() {
-                // Read prefix.
-                prefix = Some(arg.to_ascii_uppercase());
-            } else if max_rounds.is_none() {
-                // Try parsing as usize.
-                max_rounds = usize::from_str(&arg).ok();
-            } else {
-                // No more arguments to be processed.
-                break;
+    /// Parses a command line option from a string into `T` and returns `error`, when parsing fails.
+    fn parse_option<T: FromStr>(value: Option<&str>, error: ArgumentError) -> Result<Option<T>, ArgumentError> {
+        match value {
+            None => Ok(None),
+            Some(s) => match T::from_str(s.trim()) {
+                Err(_) => Err(error), // type of _: <T as FromStr>::Err
+                Ok(v) => Ok(Some(v))
             }
         }
+    }
 
-        let prefix = match prefix {
-            None => return Err(ArgumentError::PrefixMissing),
-            Some(prefix) => prefix,
-        };
+    fn parse_option_string(value: Option<&str>) -> Option<String> {
+        value.map(String::from)
+    }
 
-        Ok(Arguments {
-            strict,
-            contains,
-            prefix,
-            max_rounds,
+    pub(crate) fn parse() -> Result<Options, ArgumentError> {
+        let app = Self::create_app();
+        let matches = app.get_matches();
+
+        Ok(Options {
+            strict: matches.is_present("strict"),
+            contains: matches.is_present("contains"),
+            verbose: matches.is_present("verbose"),
+            prefix: Self::parse_option_string(matches.value_of("prefix")).ok_or(ArgumentError::PrefixMissing)?,
+            max_rounds: Self::parse_option(matches.value_of("max_rounds"), ArgumentError::InvalidRounds)?,
+            num_threads: Self::parse_option(matches.value_of("num_threads"), ArgumentError::InvalidThreads)?,
         })
     }
-}
-
-pub(crate) fn print_help(error: Option<ArgumentError>) {
-    if let Some(e) = error {
-        println!("{:?}", e);
-    }
-    println!("Usage: vanity_generate <prefix> [<max_rounds>] [--strict] [--contains]");
-    println!("  --strict    If enabled, characters will not be mapped to similar looking characters.");
-    println!("  --contains  If enabled, the prefix may also be contained in the middle of the address.");
 }

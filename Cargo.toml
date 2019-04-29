@@ -7,6 +7,8 @@ edition = "2018"
 [dependencies]
 num-bigint = "0.2"
 rand = "0.6"
+clap = "2.32"
+num_cpus = "1.10"
 
 [dependencies.nimiq-mnemonic]
 git = "https://github.com/nimiq/core-rs"
