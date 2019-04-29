@@ -88,7 +88,7 @@ fn search_addresses(thread_num: usize, args: Options, mut entropy: Entropy, solu
 
         let mnemonic = entropy.to_mnemonic(WORDLIST_EN);
         let private_key = mnemonic.to_master_key(None).unwrap();
-        let private_key = private_key.derive_path(DEFAULT_PATH).unwrap();
+        let private_key = private_key.derive_path(&args.derivation_path).unwrap();
         let address = private_key.to_address();
         let mut address_str = address.to_user_friendly_address().replace(" ", "");
 
