@@ -7,6 +7,7 @@ pub(crate) struct Options {
     pub(crate) strict: bool,
     pub(crate) contains: bool,
     pub(crate) verbose: bool,
+    pub(crate) loop_search: bool,
     pub(crate) prefix: String,
     pub(crate) derivation_path: String,
     pub(crate) max_rounds: Option<usize>,
@@ -59,6 +60,10 @@ impl Options {
                 .short("v")
                 .help("Display statistics about speed every 1000 addresses.")
                 .takes_value(false))
+            .arg(Arg::with_name("loop_search")
+                .long("loop")
+                .help("Don't stop on first address found. Continue search until stopped.")
+                .takes_value(false))
     }
 
     /// Parses a command line option from a string into `T` and returns `error`, when parsing fails.
@@ -84,6 +89,7 @@ impl Options {
             strict: matches.is_present("strict"),
             contains: matches.is_present("contains"),
             verbose: matches.is_present("verbose"),
+            loop_search: matches.is_present("loop_search"),
             prefix: Self::parse_option_string(matches.value_of("prefix"))
                 .map(|s| s.to_uppercase())
                 .ok_or(ArgumentError::PrefixMissing)?,
