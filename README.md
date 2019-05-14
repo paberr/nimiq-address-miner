@@ -30,6 +30,11 @@ In the simplest case, you can specify the prefix you would like your address to 
 cargo run --release <PREFIX>
 ```
 
+If you want to run the Nimiq Address Miner in loop mode and save the output to a file use:
+
+```bash
+cargo run --release -- --loop <PREFIX> >> output.txt
+```
 ## License
 
 This project is under the [MIT](./LICENSE).

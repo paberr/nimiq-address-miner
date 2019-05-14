@@ -106,13 +106,16 @@ fn search_addresses(thread_num: usize, args: Options, mut entropy: Entropy, solu
         };
 
         // Display match and stop.
-        if matched {
-            solution_found.store(true, Ordering::Release);
+        if matched {       
+            println!("================================================================");
             println!("Address found: {}", address.to_user_friendly_address());
+            println!("Check Nimicon: https://nimicon.app/api/?size=350&text={}", address.to_user_friendly_address().replace(" ", "%20"));
             println!("24 words:");
             println!("{}", mnemonic);
-
-            return Some(entropy);
+            if !args.loop_search {
+                solution_found.store(true, Ordering::Release);
+                return Some(entropy);
+            }    
         }
 
         rounds += 1;
